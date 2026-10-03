@@ -178,7 +178,6 @@ function render() {
   $('scaleTop').textContent = goal;
   $('scaleMid').textContent = Math.round(goal / 2);
   countTo($('totalGrams'), total);
-  $('pct').textContent = `${Math.round((total / goal) * 100)}%`;
 
   const tube = $('tube');
   tube.style.setProperty('--level', level);

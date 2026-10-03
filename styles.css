@@ -215,10 +215,9 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 
 .readout { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .label { font: 10px var(--mono); color: var(--text-2); letter-spacing: .1em; text-transform: uppercase; }
-.big { display: flex; align-items: baseline; gap: 2px; margin-top: 2px; }
+.big { display: flex; align-items: baseline; gap: 2px; margin: 2px 0 16px; }
 .big b { font: 700 50px/1 var(--mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .big span { font: 600 20px var(--mono); color: var(--text-3); }
-.pct { font: 700 16px var(--pixel); color: var(--accent); margin: 8px 0 14px; letter-spacing: 1px; }
 .readout dl { margin: 0; display: grid; gap: 0; border-top: 1px dashed var(--border-strong); }
 .readout dl div { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px dashed var(--border); }
 .readout dt { font: 10px var(--mono); color: var(--text-2); letter-spacing: .1em; text-transform: uppercase; align-self: center; }
