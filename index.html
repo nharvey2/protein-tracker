@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Protein">
+  <meta name="theme-color" content="#0f1115">
+  <title>Protein</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="day-nav">
+      <button id="prevDay" class="icon-btn" aria-label="Previous day">‹</button>
+      <h1 id="dayLabel">Today</h1>
+      <button id="nextDay" class="icon-btn" aria-label="Next day">›</button>
+    </header>
+
+    <section class="ring-wrap">
+      <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="ringFill" class="ring-fill" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div class="ring-text">
+        <div><span id="totalGrams">0</span><span class="unit">g</span></div>
+        <button id="goalBtn" class="goal-btn">of <span id="goalGrams">150</span>g goal</button>
+        <div id="remaining" class="remaining"></div>
+      </div>
+    </section>
+
+    <form id="addForm" class="add-form" autocomplete="off">
+      <input id="foodInput" type="text" placeholder="Food (e.g. Chicken breast)" enterkeyhint="next" list="foodSuggestions">
+      <datalist id="foodSuggestions"></datalist>
+      <div class="add-row">
+        <input id="gramsInput" type="number" inputmode="decimal" min="0" step="0.5" placeholder="Protein (g)" enterkeyhint="done" required>
+        <button type="submit" class="primary">Add</button>
+      </div>
+    </form>
+
+    <section id="quickSection" class="quick" hidden>
+      <h2>Quick add</h2>
+      <div id="quickList" class="chips"></div>
+    </section>
+
+    <section>
+      <h2 id="entriesHeading">Entries</h2>
+      <ul id="entryList" class="entries"></ul>
+      <p id="emptyMsg" class="empty">Nothing logged yet.</p>
+    </section>
+
+    <section>
+      <h2>Last 7 days</h2>
+      <div id="weekChart" class="week"></div>
+    </section>
+  </main>
+
+  <dialog id="goalDialog">
+    <form method="dialog" id="goalForm">
+      <h2>Daily goal</h2>
+      <input id="goalInput" type="number" inputmode="numeric" min="1" step="1">
+      <div class="dialog-actions">
+        <button value="cancel" type="submit">Cancel</button>
+        <button value="save" type="submit" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
