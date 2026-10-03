@@ -1,5 +1,5 @@
 // Caches the app shell so it opens offline. Bump CACHE when files change.
-const CACHE = 'protein-v3';
+const CACHE = 'protein-v4';
 const ASSETS = [
   './',
   'index.html',

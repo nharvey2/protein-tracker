@@ -285,15 +285,83 @@ $('nextDay').addEventListener('click', () => {
   if (!isToday(viewDate)) { viewDate = addDays(viewDate, 1); render(); }
 });
 
+// ---- Goal sheet ------------------------------------------------------------
+
+const GOAL_MIN = 10;
+const GOAL_MAX = 500;
+const GOAL_PRESETS = [100, 120, 150, 180, 200];
+
+const clampGoal = g => Math.min(Math.max(Math.round(g) || 0, GOAL_MIN), GOAL_MAX);
+
+function draftGoal() {
+  return parseInt($('goalInput').value, 10) || 0;
+}
+
+function setDraftGoal(g) {
+  $('goalInput').value = clampGoal(g);
+  const wrap = $('goalInput').parentElement;
+  wrap.classList.remove('bump');
+  void wrap.offsetWidth;
+  wrap.classList.add('bump');
+  updateGoalSheet();
+}
+
+function updateGoalSheet() {
+  const g = draftGoal();
+  const diff = g - state.goal;
+  $('goalDelta').textContent = !g ? ' '
+    : diff === 0 ? `current goal · ≈ ${Math.round(g / 3)}g per meal`
+    : `was ${state.goal}g · ${diff > 0 ? '+' : '−'}${Math.abs(diff)}g`;
+  for (const btn of $('goalPresets').children) {
+    btn.classList.toggle('selected', Number(btn.dataset.goal) === g);
+  }
+}
+
+$('goalPresets').replaceChildren(...GOAL_PRESETS.map(g => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'preset';
+  btn.dataset.goal = g;
+  btn.innerHTML = `${g}<small>grams</small>`;
+  btn.addEventListener('click', () => setDraftGoal(g));
+  return btn;
+}));
+
+// − / + step by 5; holding the button keeps stepping, faster over time.
+for (const btn of document.querySelectorAll('.step-btn')) {
+  const step = Number(btn.dataset.step);
+  let timer = null;
+  const stop = () => { clearTimeout(timer); timer = null; };
+  const repeat = delay => {
+    timer = setTimeout(() => { setDraftGoal(draftGoal() + step); repeat(Math.max(delay * 0.8, 50)); }, delay);
+  };
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    setDraftGoal(draftGoal() + step);
+    repeat(400);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+  // Keyboard activation (no pointer involved).
+  btn.addEventListener('click', e => { if (e.detail === 0) setDraftGoal(draftGoal() + step); });
+}
+
+$('goalInput').addEventListener('input', updateGoalSheet);
+
 $('goalBtn').addEventListener('click', () => {
   $('goalInput').value = state.goal;
+  updateGoalSheet();
   $('goalDialog').showModal();
+});
+
+// Tapping the dimmed backdrop dismisses the sheet.
+$('goalDialog').addEventListener('click', e => {
+  if (e.target === $('goalDialog')) $('goalDialog').close('cancel');
 });
 
 $('goalDialog').addEventListener('close', () => {
   if ($('goalDialog').returnValue !== 'save') return;
-  const g = parseInt($('goalInput').value, 10);
-  if (g > 0) { state.goal = g; saveState(); render(); }
+  const g = draftGoal();
+  if (g > 0) { state.goal = clampGoal(g); saveState(); render(); }
 });
 
 // When the app is reopened on a new day, jump back to today.

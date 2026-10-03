@@ -24,7 +24,10 @@
       <span class="logo" aria-hidden="true">&gt;_</span>
       <span>Protein Tracker</span>
     </div>
-    <button id="goalBtn" class="outline-btn">goal <span id="goalGrams">150</span>g</button>
+    <button id="goalBtn" class="outline-btn goal-btn">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><circle cx="8" cy="8" r="3.5"/><circle cx="8" cy="8" r=".8" class="fill"/></svg>
+      Set goal <span class="muted">(<span id="goalGrams">150</span>g)</span>
+    </button>
   </header>
 
   <main class="app">
@@ -103,17 +106,27 @@
     </section>
   </main>
 
-  <dialog id="goalDialog">
+  <dialog id="goalDialog" class="sheet">
     <form method="dialog" id="goalForm">
+      <div class="grabber" aria-hidden="true"></div>
       <h2>Daily goal</h2>
-      <label class="prompt-input">
-        <span class="caret" aria-hidden="true">&gt;</span>
-        <input id="goalInput" type="number" inputmode="numeric" min="1" step="1">
-        <span class="suffix">g</span>
-      </label>
+      <p class="sheet-sub">How much protein are you aiming for each day?</p>
+
+      <div class="stepper">
+        <button type="button" class="step-btn" data-step="-5" aria-label="Decrease by 5 grams">−</button>
+        <label class="goal-value">
+          <input id="goalInput" type="number" inputmode="numeric" min="10" max="500" step="1" aria-label="Daily goal in grams">
+          <span>g</span>
+        </label>
+        <button type="button" class="step-btn" data-step="5" aria-label="Increase by 5 grams">+</button>
+      </div>
+      <p id="goalDelta" class="goal-delta">&nbsp;</p>
+
+      <div id="goalPresets" class="presets"></div>
+
       <div class="dialog-actions">
-        <button value="cancel" type="submit" class="outline-btn">Cancel</button>
-        <button value="save" type="submit" class="primary">Save</button>
+        <button value="cancel" type="submit" class="outline-btn" formnovalidate>Cancel</button>
+        <button value="save" type="submit" class="primary" formnovalidate>Save goal</button>
       </div>
     </form>
   </dialog>
