@@ -1,7 +1,7 @@
 'use strict';
 
 const STORAGE_KEY = 'protein-tracker-v1';
-const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
+const BAR_BLOCKS = 20;
 
 // ---- State -----------------------------------------------------------------
 
@@ -101,19 +101,26 @@ function render() {
   const total = totalFor(viewDate);
   const goal = state.goal;
 
+  const left = Math.max(goal - total, 0);
+  const hit = total >= goal;
+
   $('dayLabel').textContent = dayLabel(viewDate);
   $('nextDay').disabled = isToday(viewDate);
-  $('totalGrams').textContent = fmt(total);
   $('goalGrams').textContent = goal;
+  $('totalGrams').textContent = fmt(total);
+  $('goalStat').textContent = goal;
+  $('leftStat').textContent = fmt(left);
+  $('remaining').textContent = hit ? 'goal reached' : `${fmt(left)}g to go`;
+  $('statusDot').classList.toggle('hit', hit);
 
-  const left = goal - total;
-  $('remaining').textContent = left > 0 ? `${fmt(left)}g to go` : 'Goal reached 🎉';
-
-  const pct = Math.min(total / goal, 1);
-  const ring = $('ringFill');
-  ring.style.strokeDasharray = RING_CIRCUMFERENCE;
-  ring.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - pct);
-  ring.style.opacity = total > 0 ? 1 : 0;
+  const filled = Math.min(Math.round((total / goal) * BAR_BLOCKS), BAR_BLOCKS);
+  const bar = $('blockBar');
+  bar.classList.toggle('hit', hit);
+  bar.replaceChildren(...Array.from({ length: BAR_BLOCKS }, (_, i) => {
+    const b = document.createElement('i');
+    if (i < filled) b.className = 'on';
+    return b;
+  }));
 
   renderEntries();
   renderQuickAdd();
@@ -127,17 +134,21 @@ function renderEntries() {
   list.replaceChildren(...entries.map(e => {
     const li = document.createElement('li');
     const time = new Date(e.ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const name = e.name || 'Protein';
     li.innerHTML = `
+      <span class="avatar"></span>
       <div class="entry-main">
         <div class="entry-name"></div>
         <div class="entry-time">${time}</div>
       </div>
-      <div class="entry-grams">${fmt(e.grams)}g</div>
+      <span class="grams-pill">+${fmt(e.grams)}g</span>
       <button class="del-btn" aria-label="Delete">×</button>`;
-    li.querySelector('.entry-name').textContent = e.name || 'Protein';
+    li.querySelector('.avatar').textContent = name[0];
+    li.querySelector('.entry-name').textContent = name;
     li.querySelector('.del-btn').addEventListener('click', () => deleteEntry(e.id));
     return li;
   }));
+  $('entryCount').textContent = entries.length;
   $('emptyMsg').hidden = entries.length > 0;
 }
 
@@ -168,7 +179,7 @@ function renderWeek() {
     const t = totals[i];
     col.innerHTML = `
       <span class="bar-val">${t ? Math.round(t) : ''}</span>
-      <span class="bar${t >= state.goal ? ' hit' : ''}" style="height:${(t / max) * 100}%"></span>
+      <span class="bar${t >= state.goal ? ' hit' : t > 0 ? ' some' : ''}" style="height:${(t / max) * 100}%"></span>
       <span class="bar-day">${d.toLocaleDateString(undefined, { weekday: 'narrow' })}</span>`;
     col.addEventListener('click', () => { viewDate = d; render(); });
     return col;
