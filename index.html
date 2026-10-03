@@ -7,8 +7,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Protein">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f7f8f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1310" media="(prefers-color-scheme: dark)">
   <title>Protein</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600;700&family=Silkscreen:wght@400;700&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="intro">
   <header class="topbar">
     <div class="brand">
       <span class="logo" aria-hidden="true">&gt;_</span>
@@ -36,12 +36,42 @@
         <button id="nextDay" class="icon-btn" aria-label="Next day">›</button>
       </div>
 
-      <div class="stats">
-        <div><b id="totalGrams">0</b><span>Eaten</span></div>
-        <div><b id="goalStat">150</b><span>Goal</span></div>
-        <div><b id="leftStat">150</b><span>Left</span></div>
+      <div class="gauge">
+        <div class="cylinder">
+          <div class="scale" aria-hidden="true">
+            <span id="scaleTop">150</span>
+            <span id="scaleMid">75</span>
+            <span>0</span>
+          </div>
+          <div id="tube" class="tube empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="liquid" class="liquid">
+              <svg class="wave wave-back" viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 10 Q25 2 50 10 T100 10 T150 10 T200 10 V20 H0 Z"/>
+              </svg>
+              <svg class="wave wave-front" viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 10 Q25 18 50 10 T100 10 T150 10 T200 10 V20 H0 Z"/>
+              </svg>
+              <div class="bubbles" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
+            </div>
+            <div class="ticks" aria-hidden="true"></div>
+            <div class="glass" aria-hidden="true"></div>
+          </div>
+          <div id="fx" class="fx" aria-hidden="true"></div>
+        </div>
+
+        <div class="readout">
+          <span class="label">Eaten</span>
+          <div class="big"><b id="totalGrams">0</b><span>g</span></div>
+          <div id="pct" class="pct">0%</div>
+          <dl>
+            <div><dt>Goal</dt><dd><span id="goalStat">150</span>g</dd></div>
+            <div><dt>Left</dt><dd><span id="leftStat">150</span>g</dd></div>
+            <div><dt>Meals</dt><dd id="mealStat">0</dd></div>
+          </dl>
+        </div>
       </div>
-      <div id="blockBar" class="block-bar" aria-hidden="true"></div>
     </section>
 
     <form id="addForm" class="add-form" autocomplete="off">

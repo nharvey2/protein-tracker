@@ -1,7 +1,8 @@
 'use strict';
 
 const STORAGE_KEY = 'protein-tracker-v1';
-const BAR_BLOCKS = 20;
+const TUBE_HEIGHT = 250;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 // ---- State -----------------------------------------------------------------
 
@@ -81,9 +82,70 @@ function quickAddItems(limit = 8) {
 function addEntry(name, grams) {
   // Logging onto a past day puts it at noon so it lands on the right date.
   const ts = isToday(viewDate) ? Date.now() : viewDate.getTime() + 12 * 3600 * 1000;
-  state.entries.push({ id: crypto.randomUUID?.() ?? String(Date.now() + Math.random()), name, grams, ts });
+  const before = totalFor(viewDate);
+  const id = crypto.randomUUID?.() ?? String(Date.now() + Math.random());
+  state.entries.push({ id, name, grams, ts });
   saveState();
+  justAddedId = id;
   render();
+
+  const after = before + grams;
+  floatGain(grams, Math.min(after / state.goal, 1));
+  if (before < state.goal && after >= state.goal) celebrate();
+}
+
+// ---- Effects ---------------------------------------------------------------
+
+let justAddedId = null;
+
+// Tween a number up or down instead of snapping to it.
+function countTo(el, target) {
+  const from = parseFloat(el.dataset.value ?? '0');
+  el.dataset.value = target;
+  if (reducedMotion.matches || from === target) { el.textContent = fmt(target); return; }
+  const start = performance.now();
+  const duration = 900;
+  const step = now => {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = fmt(from + (target - from) * eased);
+    if (t < 1 && el.dataset.value == target) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function floatGain(grams, level) {
+  const tag = document.createElement('span');
+  tag.className = 'float';
+  tag.textContent = `+${fmt(grams)}g`;
+  tag.style.top = `${Math.max((1 - level) * TUBE_HEIGHT - 26, -18)}px`;
+  tag.addEventListener('animationend', () => tag.remove());
+  $('fx').append(tag);
+
+  const tube = $('tube');
+  tube.classList.remove('slosh');
+  void tube.offsetWidth; // restart the animation
+  tube.classList.add('slosh');
+}
+
+function celebrate() {
+  if (reducedMotion.matches) return;
+  const style = getComputedStyle(document.documentElement);
+  const colors = ['--accent', '--liquid-top', '--liquid-bottom', '--border-strong'].map(v => style.getPropertyValue(v));
+  const fx = $('fx');
+  for (let i = 0; i < 28; i++) {
+    const bit = document.createElement('i');
+    bit.className = 'confetti';
+    const angle = (Math.PI * 2 * i) / 28 + Math.random() * 0.4;
+    const dist = 60 + Math.random() * 70;
+    bit.style.setProperty('--x', `${Math.cos(angle) * dist}px`);
+    bit.style.setProperty('--y', `${Math.sin(angle) * dist - 30}px`);
+    bit.style.setProperty('--r', `${Math.random() * 540 - 270}deg`);
+    bit.style.setProperty('--c', colors[i % colors.length]);
+    bit.style.animationDelay = `${Math.random() * 120}ms`;
+    bit.addEventListener('animationend', () => bit.remove());
+    fx.append(bit);
+  }
 }
 
 function deleteEntry(id) {
@@ -103,24 +165,26 @@ function render() {
 
   const left = Math.max(goal - total, 0);
   const hit = total >= goal;
+  const level = Math.min(total / goal, 1);
 
   $('dayLabel').textContent = dayLabel(viewDate);
   $('nextDay').disabled = isToday(viewDate);
   $('goalGrams').textContent = goal;
-  $('totalGrams').textContent = fmt(total);
   $('goalStat').textContent = goal;
   $('leftStat').textContent = fmt(left);
+  $('mealStat').textContent = entriesFor(viewDate).length;
   $('remaining').textContent = hit ? 'goal reached' : `${fmt(left)}g to go`;
-  $('statusDot').classList.toggle('hit', hit);
+  $('statusDot').className = 'dot' + (hit ? ' hit' : total > 0 ? ' live' : '');
+  $('scaleTop').textContent = goal;
+  $('scaleMid').textContent = Math.round(goal / 2);
+  countTo($('totalGrams'), total);
+  $('pct').textContent = `${Math.round((total / goal) * 100)}%`;
 
-  const filled = Math.min(Math.round((total / goal) * BAR_BLOCKS), BAR_BLOCKS);
-  const bar = $('blockBar');
-  bar.classList.toggle('hit', hit);
-  bar.replaceChildren(...Array.from({ length: BAR_BLOCKS }, (_, i) => {
-    const b = document.createElement('i');
-    if (i < filled) b.className = 'on';
-    return b;
-  }));
+  const tube = $('tube');
+  tube.style.setProperty('--level', level);
+  tube.classList.toggle('empty', total === 0);
+  tube.classList.toggle('full', hit);
+  tube.setAttribute('aria-valuenow', Math.round(level * 100));
 
   renderEntries();
   renderQuickAdd();
@@ -133,6 +197,7 @@ function renderEntries() {
   const entries = entriesFor(viewDate);
   list.replaceChildren(...entries.map(e => {
     const li = document.createElement('li');
+    if (e.id === justAddedId) li.className = 'enter';
     const time = new Date(e.ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     const name = e.name || 'Protein';
     li.innerHTML = `
@@ -148,6 +213,7 @@ function renderEntries() {
     li.querySelector('.del-btn').addEventListener('click', () => deleteEntry(e.id));
     return li;
   }));
+  justAddedId = null;
   $('entryCount').textContent = entries.length;
   $('emptyMsg').hidden = entries.length > 0;
 }
@@ -179,7 +245,7 @@ function renderWeek() {
     const t = totals[i];
     col.innerHTML = `
       <span class="bar-val">${t ? Math.round(t) : ''}</span>
-      <span class="bar${t >= state.goal ? ' hit' : t > 0 ? ' some' : ''}" style="height:${(t / max) * 100}%"></span>
+      <span class="bar${t >= state.goal ? ' hit' : t > 0 ? ' some' : ''}" style="height:${(t / max) * 100}%; --i:${i}"></span>
       <span class="bar-day">${d.toLocaleDateString(undefined, { weekday: 'narrow' })}</span>`;
     col.addEventListener('click', () => { viewDate = d; render(); });
     return col;
@@ -246,4 +312,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-render();
+// Start the tube empty so it fills on launch, and only animate the week bars once.
+requestAnimationFrame(() => requestAnimationFrame(render));
+setTimeout(() => document.body.classList.remove('intro'), 1500);
